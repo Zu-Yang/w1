@@ -1,0 +1,36 @@
+{
+  "author": {
+    "name": "yang"
+  },
+  "bin": {
+    "w1": "index.js"
+  },
+  "dependencies": {
+    "co": "^4.6.0",
+    "co-prompt": "^1.0.0",
+    "commander": "^2.10.0",
+    "countdownjs-plugin": "^1.0.4",
+    "jszip": "^3.6.0",
+    "moment": "^2.30.1",
+    "request": "^2.88.0"
+  },
+  "deprecated": false,
+  "description": "www1-server-uploader",
+  "keywords": [
+    "w1"
+  ],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "w1",
+  "repository": {
+    "type": "git",
+    "url": "git + https://github.com/Zu-Yang/w1.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js img.jpg",
+    "publish": "npm publish --access=public",
+    "npmjs": "npm config set registry https://registry.npmjs.org"
+  },
+  "version": "1.0.0"
+}

@@ -9,7 +9,7 @@ version:1.0.0
 
 ## 安装说明
 
-执行命令：`npm install -g w1`
+执行命令：`npm install -g www1-server-uploader`
 
 ## 命令参数说明
 
@@ -32,7 +32,7 @@ w1 -h 或者 w1
 
 查看命令行信息
 
-## 使用说明
+## 使用说明(图片参考:[www1](https://www.npmjs.com/package/www1))
 
 ### 首次提交：
 

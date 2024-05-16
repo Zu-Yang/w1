@@ -2,6 +2,9 @@
 
 www1-server-uploader
 
+>在原 [www1](https://www.npmjs.com/package/www1) 基础上增加定时上传功能
+
+
 version:1.0.0
 
 ## 安装说明
@@ -25,7 +28,6 @@ w1 reset
 
 ```
 w1 -h 或者 w1
-
 ```
 
 查看命令行信息
@@ -36,13 +38,13 @@ w1 -h 或者 w1
 
 ![](https://www1.pcauto.com.cn/test/gz20210701/npm/www1/1.png)
 
-| 参数         | 说明                                                     |
+| 参数         | 说明                                                    |
 | ------------ | ------------------------------------------------------- |
-| `site`       | 需要上传到那个网(pconline/pcauto/pcbaby/pclady/pchouse)   |
-| `targetPath` | 需要上传的路径(注意避免覆盖他人项目)                        |
-| `timer`      | 上传时间                                                 |
-| `username`   | PC 账户名                                                |
-| `password`   | PC 账户密码                                              |
+| `site`       | 需要上传到那个网(pconline/pcauto/pcbaby/pclady/pchouse) |
+| `targetPath` | 需要上传的路径(注意避免覆盖他人项目)                    |
+| `timer`      | 上传时间(YYYY-MM-DD HH:mm:ss)                           |
+| `username`   | PC 账户名                                               |
+| `password`   | PC 账户密码                                             |
 
 ### 再次提交
 

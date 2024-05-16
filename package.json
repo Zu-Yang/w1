@@ -26,12 +26,11 @@
     "type": "git",
     "url": "git + https://github.com/Zu-Yang/www1-server-uploader.git"
   },
-  "_resolved": "https://registry.npmmirror.com/w1/-/www1-server-uploader-1.0.0.tgz",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js img.jpg",
     "publish": "npm publish",
     "npmjs": "npm config set registry https://registry.npmjs.org"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

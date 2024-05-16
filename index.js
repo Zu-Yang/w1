@@ -13,7 +13,7 @@ const os = require("os");
 const path = require("path");
 const JSZip = require("jszip");
 const moment = require("moment");
-const Countdown = require("countdownjs-plugin");
+const Countdown = require("./countdown.js");
 
 let pcUrl = os.homedir(); // 获取操作系统中用户的主目录URL
 let files = fs.readdirSync(pcUrl); // 从指定路径（pcUrl）中读取目录中的所有文件

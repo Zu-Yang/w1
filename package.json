@@ -31,5 +31,5 @@
     "publish": "npm publish",
     "npmjs": "npm config set registry https://registry.npmjs.org"
   },
-  "version": "1.0.1"
+  "version": "1.0.2"
 }

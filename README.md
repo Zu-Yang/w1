@@ -2,10 +2,9 @@
 
 www1-server-uploader
 
->在原 [www1](https://www.npmjs.com/package/www1) 基础上增加定时上传功能
+> 在原 [www1](https://www.npmjs.com/package/www1) 基础上增加定时上传功能
 
-
-version:1.0.0
+version:1.0.3
 
 ## 安装说明
 

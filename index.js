@@ -15,6 +15,23 @@ const JSZip = require("jszip");
 const moment = require("moment");
 const Countdown = require("./countdown.js");
 
+// 取消上传
+process.on("SIGINT", function () {
+  deleteaFile();
+  console.log("\x1B[31m%s\x1B[0m", "\n你已终止操作");
+  process.exit(); // 立即终止node.js应用程序
+});
+
+// 全局捕获错误
+process.on("uncaughtException", (error) => {
+  // 打印错误信息
+  console.error("\x1B[31m%s\x1B[0m", error);
+  // 执行必要的清理操作
+  deleteaFile(); // 清理文件
+  // 在完成清理后，可以选择退出进程
+  process.exit();
+});
+
 let pcUrl = os.homedir(); // 获取操作系统中用户的主目录URL
 let files = fs.readdirSync(pcUrl); // 从指定路径（pcUrl）中读取目录中的所有文件
 let record = false; // 是否存在.www1文件夹
@@ -39,11 +56,11 @@ var CONFIG = {
 //doc: https://www.npmjs.com/package/commander#coercion
 program
   .arguments("<file...>")
-  .option("-m, --timer <timer>", "定时上传文件")
   .option("-u, --username <username>", "PC账户名")
   .option("-p, --password <password>", "PC账户密码")
   .option("-s, --site <site>", "pconline/pcauto/pcbaby/pclady/pchouse")
   .option("-t, --targetPath <targetPath>", "路径(注意避免覆盖他人项目)")
+  .option("-m, --timer <timer>", "定时上传文件")
   .command("reset", "重置用户信息")
   .action(function (file) {
     file = Array.from(new Set(file));
@@ -51,24 +68,24 @@ program
     try {
       file.forEach(function (item, index) {
         if (item[0] == ".") {
-          console.log(
-            "\x1B[31m%s\x1B[0m",
-            "文件或者文件夹不能以.开头：" + item
-          );
-          throw Error();
+          // console.log(
+          //   "\x1B[31m%s\x1B[0m",
+          //   "文件或者文件夹不能以.开头：" + item
+          // );
+          throw Error("文件或者文件夹不能以.开头：" + item);
         } else {
           if (!fs.existsSync(item)) {
-            console.log(
-              "\x1B[31m%s\x1B[0m",
-              "file " + item + " dosn't exists!"
-            );
-            throw Error();
+            // console.log(
+            //   "\x1B[31m%s\x1B[0m",
+            //   "file " + item + " dosn't exists!"
+            // );
+            throw Error("file " + item + " dosn't exists!");
           }
           let statsObj = fs.statSync(item);
           if (item.indexOf(".") == -1) {
             if (!statsObj.isDirectory()) {
-              console.log("\x1B[31m%s\x1B[0m", "文件类型有误：" + item);
-              throw Error();
+              // console.log("\x1B[31m%s\x1B[0m", "文件类型有误：" + item);
+              throw Error("文件类型有误：" + item);
             }
           }
           if (statsObj.isDirectory()) {
@@ -84,14 +101,35 @@ program
         }
       });
     } catch (e) {
-      return;
+      throw Error(e);
     }
     console.log("\n需要上传的类型：" + Array.from(new Set(fileLx)) + "\n");
 
+    // function* () {} 生成器函数；yield 暂停函数；next 继续执行函数
     co(function* () {
+      // site处理
       var site = yield prompt("\x1B[36m site: \x1B[0m");
+      switch (site) {
+        case "pconline":
+        case "pcauto":
+        case "pclady":
+        case "pcbaby":
+        case "pchouse":
+          CONFIG.site = site;
+          break;
+        default:
+          throw Error("Illegal site!");
+      }
+      // targetPath处理
       var targetPath = yield prompt("\x1B[36m targetPath: \x1B[0m");
+      if (!targetPath) {
+        throw Error("Illegal path!");
+      }
+      // timer处理
       var timer = yield prompt("\x1B[36m timer(YYYY-MM-DD HH:mm:ss): \x1B[0m");
+      if (!timer) {
+        throw Error("Illegal timer!");
+      }
 
       var username = "";
       var password = "";
@@ -113,30 +151,6 @@ program
         password = yield prompt("\x1B[36m password: \x1B[0m");
       }
       process.stdin.pause();
-
-      switch (site) {
-        case "pconline":
-        case "pcauto":
-        case "pclady":
-        case "pcbaby":
-        case "pchouse":
-          CONFIG.site = site;
-          break;
-        default:
-          console.log("Illegal site!");
-          return;
-      }
-      if (!targetPath) {
-        console.log("Illegal path!");
-        return;
-      }
-      console.log(
-        "file: %s  site: %s  targetPath: %s timer: %s",
-        file,
-        site,
-        targetPath,
-        timer
-      );
 
       var postContent = qs.stringify({
         app: CONFIG.site == "pcbaby" ? "pckidsulms" : "upload_" + CONFIG.site,
@@ -187,12 +201,14 @@ program
             var tmp = url.parse(_url).query;
             var _res = qs.parse(tmp);
             if (_res.st == -1) {
-              console.log(
-                "\x1B[31m%s\x1B[0m",
-                "\n用户信息验证失败！请确认您的用户信息是否更新过，稍后重试！"
-              );
+              // console.log(
+              //   "\x1B[31m%s\x1B[0m",
+              //   "\n用户信息验证失败！请确认您的用户信息是否更新过，稍后重试！"
+              // );
               deleteall(newP);
-              return;
+              throw Error(
+                "用户信息验证失败！请确认您的用户信息是否更新过，稍后重试！"
+              );
             } else {
               let formUrl = res.headers.location.replace(":8080", "");
               request(formUrl, function (error, response, body) {
@@ -203,7 +219,7 @@ program
             }
           })
           .on("error", function (err) {
-            console.log(err);
+            throw Error(err);
           });
         req.write(postContent);
         req.end();
@@ -342,56 +358,66 @@ program
             }
           })
           .catch(function (err) {
-            console.log("\x1B[31m%s\x1B[0m", err);
+            // console.log("\x1B[31m%s\x1B[0m", err);
+            throw Error(err);
           });
       }
-
+      // 信息展示
+      console.log(
+        "file: %s  site: %s  targetPath: %s 上传时间: %s",
+        file,
+        site,
+        targetPath,
+        timer
+      );
       // 倒计时
       if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timer)) {
         const start = new Date().getTime();
         const end = moment(timer, "YYYY-MM-DD HH:mm:ss").valueOf();
+        if (end < start) {
+          console.log("\x1B[31m%s\x1B[0m", "上传时间不能小于当前时间！");
+          return;
+        }
 
-        var remainder = null; // 剩余时间
-        console.log("倒计时开始......");
+        // 验证用户信息
+        promise
+          .then(function (res) {
+            // console.log(res, "信息验证通过！");
+            console.log(`\n等待上传，请勿关闭终端！\n`);
+            // 创建倒计时
+            new Countdown(
+              start, // 开始时间的时间戳
+              end, // 结束的时间戳
+              // 倒计时中回调
+              function (param) {
+                const { days, hours, minutes, seconds } = param;
+                var remainder =
+                  (days == "00" ? "" : days + "天") +
+                  (hours == "00" ? "" : hours + "时") +
+                  (minutes == "00" ? "" : minutes + "分") +
+                  seconds +
+                  "秒";
+                process.stdout.moveCursor(0, -1); // x 的值为 0，表示光标的列保持不变。y 的值为 -1，表示光标向上移动一行
+                process.stdout.clearLine(); // 清除当前行
+                console.log(`\x1B[36m${remainder}\x1B[0m后开始上传`); // 光标会自动换行
+              },
 
-        // 创建倒计时
-        new Countdown(
-          start, // 开始时间的时间戳
-          end, // 结束的时间戳
-          // 倒计时中回调
-          function (param) {
-            const { days, hours, minutes, seconds } = param;
-            remainder =
-              (days == "00" ? "" : days + "天") +
-              (hours == "00" ? "" : hours + "时") +
-              (minutes == "00" ? "" : minutes + "分") +
-              seconds +
-              "秒";
-            // console.log(days + "天", hours, "时", minutes, "分", seconds, "秒");
-          },
-          // 结束回调
-          function () {
-            console.log("倒计时结束......");
-            packUpload(); // 倒计时结束自动执行上传
-          }
-        );
-        console.log(`等待 \x1B[36m${remainder}\x1B[0m 开始上传`);
-        return;
+              // 结束回调
+              function () {
+                packUpload(); // 倒计时结束自动执行上传
+              }
+            );
+          })
+          .catch(function (err) {
+            throw Error(err);
+          });
       } else if (timer == "none") {
         packUpload();
-        return;
-      } else if (timer == "") {
-        console.log(
-          "\x1B[31m%s\x1B[0m",
-          "非定时上传请输入：none，定时上传请输入：具体时间（格式为YYYY-MM-DD HH:mm:ss）"
-        );
-        return;
       } else {
-        console.log(
-          "\x1B[31m%s\x1B[0m",
-          "时间格式有误，应为 YYYY-MM-DD HH:mm:ss"
+        // console.log("\x1B[31m%s\x1B[0m","非定时上传请输入：none，定时上传请输入：具体时间（格式为YYYY-MM-DD HH:mm:ss）");
+        throw Error(
+          "非定时上传输入：none，定时上传输入：具体时间（格式YYYY-MM-DD HH:mm:ss）"
         );
-        return;
       }
     });
   })
@@ -418,7 +444,8 @@ function saveUserInfo(username, password, info = false) {
     `{username:'${username}',password:'${password}'}`,
     function (err) {
       if (err) {
-        console.log("\x1B[31m%s\x1B[0m", err);
+        // console.log("\x1B[31m%s\x1B[0m", err);
+        throw Error(err);
       }
     }
   );
@@ -431,8 +458,8 @@ function getUserInfo() {
     data = fs.readFileSync(fpath, "utf-8");
     return data;
   } catch (err) {
-    console.log("\x1B[31m%s\x1B[0m", "读取文件失败,内容是" + error.message);
-    return data;
+    // console.log("\x1B[31m%s\x1B[0m", "读取文件失败,内容是" + err.message);
+    throw Error("读取文件失败,内容是" + err.message);
   }
 }
 // 删除操作系统中用户的主目录.www1文件
@@ -527,10 +554,3 @@ function deleteaFile() {
     });
   }
 }
-
-// 取消上传
-process.on("SIGINT", function () {
-  deleteaFile();
-  console.log("\n你已终止操作");
-  process.exit(); // 立即终止node.js应用程序
-});

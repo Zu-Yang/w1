@@ -4,7 +4,7 @@ www1-server-uploader
 
 > 在原 [www1](https://www.npmjs.com/package/www1) 基础上增加定时上传功能
 
-version:1.0.3
+version:1.0.4
 
 ## 安装说明
 
@@ -17,13 +17,13 @@ w1 <filename>
 ```
 
 上传到 www1 的文件名称（支持 zip,jpg,png,gif,js,css,html,mp3,mp4）或者文件夹名称
-提交成功时，系统会记住当前 `username` 和 `password`
+提交成功时，系统会记住当前 `username`、`password`、`email`
 
 ```
 w1 reset
 ```
 
-重置 `username` 和 `password`
+重置 `username`、`password`、`email`
 
 ```
 w1 -h 或者 w1
@@ -39,11 +39,12 @@ w1 -h 或者 w1
 
 | 参数         | 说明                                                    |
 | ------------ | ------------------------------------------------------- |
-| `site`       | 需要上传到那个网(pconline/pcauto/pcbaby/pclady/pchouse) |
-| `targetPath` | 需要上传的路径(注意避免覆盖他人项目)                    |
+| `site`       | 需要上传到那个网(pconline/pcauto/pcbaby/pclady/pchouse)  |
+| `targetPath` | 需要上传的路径(注意避免覆盖他人项目)                       |
 | `timer`      | 上传时间(YYYY-MM-DD HH:mm:ss)                           |
 | `username`   | PC 账户名                                               |
 | `password`   | PC 账户密码                                             |
+| `email`      | 定时上传提醒(非定时不提醒,非.zip文件不提醒)                |
 
 ### 再次提交
 
@@ -51,11 +52,11 @@ w1 -h 或者 w1
 
 > 使用过一次 w1 上传成功后，系统会自动记录 username 和 password
 
-### 重置`username`与`password`
+### 重置`username`、`password`、`email`
 
 ![](https://www1.pcauto.com.cn/test/gz20210701/npm/www1/3.png)
 
-> 重置完，下次提交时，需要重新输入`username`和`password`
+> 重置完，下次提交时，需要重新输入`username`、`password`、`email`
 
 ### 单个上传模式(推荐使用此模式)
 

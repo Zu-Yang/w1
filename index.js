@@ -14,6 +14,7 @@ const path = require("path");
 const JSZip = require("jszip");
 const moment = require("moment");
 const Countdown = require("./countdown.js");
+const mailer = require("./mailer.js");
 
 // 取消上传
 process.on("SIGINT", function () {
@@ -34,12 +35,12 @@ process.on("uncaughtException", (error) => {
 
 let pcUrl = os.homedir(); // 获取操作系统中用户的主目录URL
 let files = fs.readdirSync(pcUrl); // 从指定路径（pcUrl）中读取目录中的所有文件
-let record = false; // 是否存在.www1文件夹
-let newP = path.join(os.homedir(), ".www1"); // 将主目录和.www1文件夹的路径连接, 可以用于创建、操作或删除.www1文件夹
+let record = false; // 是否存在.w1文件夹
+let newP = path.join(os.homedir(), ".w1"); // 将主目录和.w1文件夹的路径连接, 可以用于创建、操作或删除.w1文件夹
 let zipIs = false;
 let filesUrl = [];
 files.forEach(function (itm, index) {
-  if (itm == ".www1") {
+  if (itm == ".w1") {
     record = true;
   }
 });
@@ -105,7 +106,7 @@ program
     }
     console.log("\n需要上传的类型：" + Array.from(new Set(fileLx)) + "\n");
 
-    // function* () {} 生成器函数；yield 暂停函数；next 继续执行函数
+    // function* () {} 生成器函数；yield 暂停函数；next 继续执行函数, 配合co使用
     co(function* () {
       // site处理
       var site = yield prompt("\x1B[36m site: \x1B[0m");
@@ -133,6 +134,7 @@ program
 
       var username = "";
       var password = "";
+      var email = "";
       var userInfoIs = false;
       if (record) {
         //读取文件
@@ -141,14 +143,17 @@ program
           data = eval("(" + data + ")");
           username = data.username;
           password = data.password;
+          email = data.email;
         } else {
           username = yield prompt("\x1B[36m username: \x1B[0m");
           password = yield prompt("\x1B[36m password: \x1B[0m");
+          email = yield prompt("\x1B[36m email: \x1B[0m");
           userInfoIs = true;
         }
       } else {
         username = yield prompt("\x1B[36m username: \x1B[0m");
         password = yield prompt("\x1B[36m password: \x1B[0m");
+        email = yield prompt("\x1B[36m email: \x1B[0m");
       }
       process.stdin.pause();
 
@@ -205,7 +210,21 @@ program
               //   "\x1B[31m%s\x1B[0m",
               //   "\n用户信息验证失败！请确认您的用户信息是否更新过，稍后重试！"
               // );
-              deleteall(newP);
+              deleteall(newP); // 删除w1文件
+              // 路径处理
+              targetPath = targetPath[0] == "/" ? targetPath : "/" + targetPath;
+              targetPath =
+                targetPath[targetPath.length - 1] == "/"
+                  ? targetPath
+                  : targetPath + "/";
+              if (!!email)
+                mailer(
+                  "上传失败，用户信息验证失败！",
+                  email,
+                  `https://www1.${site}.com.cn${targetPath}`
+                ).then(function (res) {
+                  console.log("已发送邮箱提醒");
+                });
               throw Error(
                 "用户信息验证失败！请确认您的用户信息是否更新过，稍后重试！"
               );
@@ -227,7 +246,8 @@ program
 
       // 打包上传
       function packUpload() {
-        promise
+        console.log("\n");
+        return promise
           .then(function (session) {
             return new Promise(function (resolve, reject) {
               if (filesUrl.length != 0) {
@@ -350,12 +370,17 @@ program
             });
             deleteaFile(); // 删除文件
             if (userInfoIs && record) {
-              saveUserInfo(username, password, true);
+              saveUserInfo(username, password, email, true);
             } else {
               if (!record) {
-                saveUserInfo(username, password);
+                saveUserInfo(username, password, email);
               }
             }
+            if (zipIs == true)
+              return new Promise(function (resolve, reject) {
+                // 压缩包
+                resolve && resolve(`https://www1.${site}.com.cn${targetPath}`);
+              });
           })
           .catch(function (err) {
             // console.log("\x1B[31m%s\x1B[0m", err);
@@ -383,7 +408,7 @@ program
         promise
           .then(function (res) {
             // console.log(res, "信息验证通过！");
-            console.log(`\n等待上传，请勿关闭终端！\n`);
+            console.log(`\n`);
             // 创建倒计时
             new Countdown(
               start, // 开始时间的时间戳
@@ -399,12 +424,19 @@ program
                   "秒";
                 process.stdout.moveCursor(0, -1); // x 的值为 0，表示光标的列保持不变。y 的值为 -1，表示光标向上移动一行
                 process.stdout.clearLine(); // 清除当前行
-                console.log(`\x1B[36m${remainder}\x1B[0m后开始上传`); // 光标会自动换行
+                console.log(
+                  `\x1B[36m${remainder}\x1B[0m后开始上传，请勿关闭终端！`
+                ); // 光标会自动换行
               },
 
               // 结束回调
               function () {
-                packUpload(); // 倒计时结束自动执行上传
+                packUpload().then(function (url) {
+                  if (url && !!email)
+                    mailer("上传成功", email, url).then(function (res) {
+                      console.log("已发送邮箱提醒");
+                    });
+                }); // 倒计时结束自动执行上传
               }
             );
           })
@@ -433,15 +465,15 @@ program
   .parse(process.argv);
 
 // 保存用户信息在操作系统中用户的主目录
-function saveUserInfo(username, password, info = false) {
-  let fpath = path.join(newP, "www1");
+function saveUserInfo(username, password, email, info = false) {
+  let fpath = path.join(newP, "w1");
   if (info) {
     deleteall(newP);
   }
   fs.mkdirSync(newP);
   fs.writeFile(
     fpath,
-    `{username:'${username}',password:'${password}'}`,
+    `{username:'${username}',password:'${password}',email:'${email}'}`,
     function (err) {
       if (err) {
         // console.log("\x1B[31m%s\x1B[0m", err);
@@ -450,9 +482,9 @@ function saveUserInfo(username, password, info = false) {
     }
   );
 }
-// 获取操作系统中用户的主目录.www1文件的用户信息
+// 获取操作系统中用户的主目录.w1文件的用户信息
 function getUserInfo() {
-  let fpath = path.join(newP, "www1");
+  let fpath = path.join(newP, "w1");
   let data = null;
   try {
     data = fs.readFileSync(fpath, "utf-8");
@@ -462,7 +494,7 @@ function getUserInfo() {
     throw Error("读取文件失败,内容是" + err.message);
   }
 }
-// 删除操作系统中用户的主目录.www1文件
+// 删除操作系统中用户的主目录.w1文件
 function deleteall(path) {
   let files = [];
   if (fs.existsSync(path)) {
